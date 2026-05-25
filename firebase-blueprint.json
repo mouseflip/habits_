@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "The user's core profile, tracker of currency, total experience, level, name, and current boss HP.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner userId of the profile" },
+        "name": { "type": "string", "description": "Hero name of the character" },
+        "xp": { "type": "integer", "description": "Current total XP of the user" },
+        "crystals": { "type": "integer", "description": "Available crystal currency" },
+        "streak": { "type": "integer", "description": "Current consecutive active days" },
+        "bossHp": { "type": "integer", "description": "The remaining HP of the current boss in the arena" },
+        "level": { "type": "integer", "description": "The user's character level" },
+        "nextEvolution": { "type": "string", "description": "The next evolution group or name" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp when this profile was last updated" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the user registered" }
+      },
+      "required": ["userId", "name", "xp", "crystals", "streak", "bossHp", "level", "nextEvolution", "updatedAt", "createdAt"]
+    },
+    "District": {
+      "title": "District",
+      "description": "Represents one of the user's three districts of mastery: Knowledge, Artisan, or Engineering.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID of the district (e.g. d1, d2, d3)" },
+        "name": { "type": "string", "description": "The custom district title" },
+        "desc": { "type": "string", "description": "Descriptions containing subclass information" },
+        "level": { "type": "integer", "description": "The district level for the user" },
+        "xp": { "type": "integer", "description": "User's current XP inside this specific district path" },
+        "maxXp": { "type": "integer", "description": "XP required to level up the district" },
+        "pathName": { "type": "string", "description": "E.g. Scholar Path, Creator Path, Builder Path" },
+        "perAction": { "type": "string", "description": "The string illustrating XP gained per trigger" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last progress update" }
+      },
+      "required": ["id", "name", "desc", "level", "xp", "maxXp", "pathName", "perAction", "updatedAt"]
+    },
+    "Quest": {
+      "title": "Quest",
+      "description": "An active or completed daily quest. Represents single custom or default task to be done.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique id of the quest" },
+        "title": { "type": "string", "description": "Title of the task to complete" },
+        "desc": { "type": "string", "description": "Brief description of task deliverables" },
+        "xp": { "type": "integer", "description": "XP reward for finishing this quest" },
+        "color": { "type": "string", "description": "Styling color tag of the quest card" },
+        "completed": { "type": "boolean", "description": "Check whether the quest has been marked completed today" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Quest last update timestamp" }
+      },
+      "required": ["id", "title", "desc", "xp", "color", "completed", "updatedAt"]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "An item or gear that the user currently possesses, unlocked or bought through the shop.",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string", "description": "Unique id of the catalog item" },
+        "title": { "type": "string", "description": "Name of the purchased item" },
+        "rarity": { "type": "string", "description": "Rarity category (common, uncommon, rare, epic, legendary)" },
+        "category": { "type": "string", "description": "Category like weapon, armor, relic, pet" },
+        "purchasedAt": { "type": "string", "format": "date-time", "description": "Timestamp when this item was bought" }
+      },
+      "required": ["itemId", "title", "rarity", "category", "purchasedAt"]
+    },
+    "Oracle": {
+      "title": "Oracle",
+      "description": "Daily royal decrees, stressor alerts, and magical blessings delivered by the Oracle.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "description": "The date of the oracle reading (formatted YYYY-MM-DD)" },
+        "decrees": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of 1-3 decrees generated that act as checklist items linked to daily habits."
+        },
+        "stressor": { "type": "string", "description": "The recurring stressor identified, or null" },
+        "blessing": { "type": "string", "description": "A motivational phrase in fantasy/regal tone" },
+        "transcription": { "type": "string", "description": "Filtered transcribed morning declaration voice note" },
+        "completed": { "type": "boolean", "description": "Whether all decrees for the day are complete" },
+        "completedDecrees": { "type": "array", "items": { "type": "boolean" }, "description": "Completion states of each decree item" },
+        "linkedQuests": { "type": "array", "items": { "type": "string" }, "description": "The customized target daily quest IDs mapped to each decree, optional" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last update" }
+      },
+      "required": ["date", "decrees", "stressor", "blessing", "transcription", "completed", "completedDecrees", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": "Profile",
+      "description": "Access the user's shared profile and battle metrics."
+    },
+    "/profiles/{userId}/districts/{districtId}": {
+      "schema": "District",
+      "description": "The list of three districts of mastery for this specific profile."
+    },
+    "/profiles/{userId}/quests/{questId}": {
+      "schema": "Quest",
+      "description": "The user's list of current daily quests and status."
+    },
+    "/profiles/{userId}/inventory/{itemId}": {
+      "schema": "InventoryItem",
+      "description": "The weapons, relics, gear and status skins the user has bought."
+    },
+    "/profiles/{userId}/oracle/{date}": {
+      "schema": "Oracle",
+      "description": "Daily oracle parchment record for history and progress tracking."
+    }
+  }
+}

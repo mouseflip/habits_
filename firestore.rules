@@ -1,0 +1,186 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Primitive Definitions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidProfile(data) {
+      return data.userId == request.auth.uid
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.xp is int && data.xp >= 0 && data.xp <= 1000000
+        && data.crystals is int && data.crystals >= 0 && data.crystals <= 1000000
+        && data.streak is int && data.streak >= 0 && data.streak <= 10000
+        && data.bossHp is int && data.bossHp >= 0 && data.bossHp <= 10000
+        && data.level is int && data.level >= 1 && data.level <= 100
+        && data.nextEvolution is string && data.nextEvolution.size() <= 100;
+    }
+
+    function isValidDistrict(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 64
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.desc is string && data.desc.size() <= 500
+        && data.level is int && data.level >= 1 && data.level <= 100
+        && data.xp is int && data.xp >= 0 && data.xp <= 1000000
+        && data.maxXp is int && data.maxXp >= 10 && data.maxXp <= 1000000
+        && data.pathName is string && data.pathName.size() <= 100
+        && data.perAction is string && data.perAction.size() <= 100;
+    }
+
+    function isValidQuest(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 64
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.desc is string && data.desc.size() <= 1000
+        && data.xp is int && data.xp >= 0 && data.xp <= 10000
+        && data.color is string && data.color.size() <= 100
+        && data.completed is bool;
+    }
+
+    function isValidInventoryItem(data) {
+      return data.itemId is string && data.itemId.size() > 0 && data.itemId.size() <= 128
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.rarity is string && (data.rarity == 'common' || data.rarity == 'uncommon' || data.rarity == 'rare' || data.rarity == 'epic' || data.rarity == 'legendary')
+        && data.category is string && (data.category == 'weapon' || data.category == 'armor' || data.category == 'relic' || data.category == 'pet' || data.category == 'cosmetic');
+    }
+
+    function isValidOracle(data) {
+      return data.date is string && data.date.size() <= 32
+        && data.decrees is list
+        && (data.stressor == null || data.stressor is string)
+        && data.blessing is string
+        && data.transcription is string
+        && data.completed is bool
+        && data.completedDecrees is list;
+    }
+
+    // --- Global Safety Net ---
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Business Resource Matches ---
+
+    match /profiles/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId 
+        && isValidId(userId)
+        && isValidProfile(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isSignedIn() 
+        && request.auth.uid == userId
+        && isValidProfile(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'xp', 'crystals', 'streak', 'bossHp', 'level', 'nextEvolution', 'updatedAt']);
+
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+
+      // Sub-collections under Profiles (Parent Relation Gates)
+
+      match /districts/{districtId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        
+        allow create: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidId(districtId)
+          && isValidDistrict(incoming())
+          && incoming().updatedAt == request.time;
+          
+        allow update: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidDistrict(incoming())
+          && incoming().id == existing().id
+          && incoming().name == existing().name
+          && incoming().desc == existing().desc
+          && incoming().pathName == existing().pathName
+          && incoming().perAction == existing().perAction
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['level', 'xp', 'maxXp', 'updatedAt']);
+          
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /quests/{questId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        
+        allow create: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidId(questId)
+          && isValidQuest(incoming())
+          && incoming().updatedAt == request.time;
+          
+        allow update: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidQuest(incoming())
+          && incoming().id == existing().id
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'xp', 'color', 'completed', 'updatedAt']);
+          
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /inventory/{itemId} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        
+        allow create: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidId(itemId)
+          && isValidInventoryItem(incoming())
+          && incoming().purchasedAt == request.time;
+          
+        allow update: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidInventoryItem(incoming())
+          && incoming().itemId == existing().itemId
+          && incoming().purchasedAt == existing().purchasedAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'rarity']);
+          
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      match /oracle/{date} {
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        
+        allow create: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidId(date)
+          && isValidOracle(incoming())
+          && incoming().updatedAt == request.time;
+          
+        allow update: if isSignedIn() 
+          && request.auth.uid == userId
+          && isValidOracle(incoming())
+          && incoming().date == existing().date
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'completedDecrees', 'linkedQuests', 'updatedAt']);
+          
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400..700&family=Space+Grotesk:wght@400..700&family=Work+Sans:wght@400..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Newsreader", serif;
+  --font-sans: "Work Sans", sans-serif;
+  --font-mono: "Space Grotesk", monospace;
+
+  --color-background: #131315;
+  --color-surface: #131315;
+  --color-surface-container: #201f21;
+  --color-surface-container-high: #2a2a2c;
+  --color-surface-container-highest: #353436;
+  --color-primary: #c5c3e4;
+  --color-secondary: #c1c4e5;
+  --color-tertiary: #d6c595;
+  --color-error: #ffb4ab;
+  --color-on-surface: #e5e1e4;
+  --color-on-surface-variant: #c8c5ce;
+  
+  --radius-xl: 1.5rem;
+  --radius-lg: 1rem;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .pixelated {
+    image-rendering: pixelated;
+  }
+  
+  .glow-primary {
+    box-shadow: 0 0 15px rgba(197, 195, 228, 0.3);
+  }
+  
+  .glow-tertiary {
+    box-shadow: 0 0 15px rgba(214, 197, 149, 0.3);
+  }
+
+  .text-shadow-hero {
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
